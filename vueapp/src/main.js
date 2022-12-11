@@ -3,6 +3,8 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
+import './assets/css/default.css'
+import './assets/js/default.js'
 
 Vue.config.productionTip = false
 
@@ -12,4 +14,11 @@ new Vue({
   router,
   components: { App },
   template: '<App/>'
+})
+
+new Vue({
+  el: '#helloMsg',
+  data: {
+    username: 'username'
+  }
 })
