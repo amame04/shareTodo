@@ -4,6 +4,7 @@ import (
   "net/http"
   "database/sql"
 
+  "github.com/gin-contrib/cors"
   "github.com/gin-contrib/sessions"
   "github.com/gin-contrib/sessions/cookie"
   "github.com/gin-gonic/gin"
@@ -19,7 +20,14 @@ func main() {
   store := cookie.NewStore([]byte("secret"))
 
   r.Use(sessions.Sessions("session", store))
-  r.Static("/views", "./views")
+  //r.Static("/views", "./views")
+
+  r.Use(cors.New(cors.Config{
+    AllowOrigins: []string{
+      "http://localhost:8080",
+    },
+    AllowCredentials: true,
+  }))
 
   //db
   DB.DBinit()
@@ -70,6 +78,6 @@ func main() {
     c.JSON(http.StatusOK, gin.H{"success" : success})
   })
 
-  r.Run(":8080")
+  r.Run(":8888")
 }
 

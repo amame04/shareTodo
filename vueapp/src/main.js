@@ -4,7 +4,10 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import './assets/css/default.css'
-import './assets/js/default.js'
+import axios from 'axios'
+import VueAxios from 'vue-axios'
+
+Vue.use(VueAxios, axios)
 
 Vue.config.productionTip = false
 
@@ -13,12 +16,5 @@ new Vue({
   el: '#app',
   router,
   components: { App },
-  template: '<App/>'
-})
-
-new Vue({
-  el: '#helloMsg',
-  data: {
-    username: 'username'
-  }
+  template: '<App/>',
 })

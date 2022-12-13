@@ -71,6 +71,7 @@ func GetUserList() []User {
   for row.Next() {
     var user User
     err := row.Scan(&user.Id, &user.Pass)
+    user.Pass = "" 
     if err != nil {
       log.Fatal(err)
     }
@@ -95,12 +96,8 @@ func RegisterUser(id, pass string) bool {
   }
 
   _, err = sql.Exec(id, hash)
-  if err != nil {
-    log.Fatal(err)
-    return false
-  }
   
-  return true
+  return err == nil 
 }
 
 func LoginUser(id, pass string) bool {
