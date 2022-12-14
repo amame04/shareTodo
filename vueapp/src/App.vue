@@ -21,8 +21,13 @@ export default {
       username: ''
     }
   },
+  watch: {
+    $route () {
+      location.reload()
+    }
+  },
   created () {
-    this.axios.get('http://localhost:8888', {
+    this.axios.get('http://localhost:8888/user', {
       withCredentials: true
     })
       .then(response => {

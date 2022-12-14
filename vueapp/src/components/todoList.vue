@@ -8,7 +8,7 @@
         <input v-model="todo" class="form-control" type="text" placeholder="やること" autofocus required>
       </div>
       <div class="col-sm-2">
-        <flat-pickr v-model="datetime" :config="config" placeholder="いつまで" class="form-control"></flat-pickr>
+        <flat-pickr id="datetime-flatpickr" v-bind:modelValue="datetime" :config="config" placeholder="いつまで" class="form-control"></flat-pickr>
       </div>
       <div class="col-sm-2">
         <div class="form-control">
@@ -53,7 +53,7 @@
           </div>
         </div>
       </div>
-      <h4 v-if="todoList == null">TODOを追加しましょう! {{datetime}}</h4>
+      <h4 v-if="todoList == null">TODOを追加しましょう!</h4>
     </div>
 
   </div>
@@ -87,20 +87,7 @@ export default {
     flatPickr
   },
   created () {
-    this.axios.get('http://localhost:8888/', {
-      withCredentials: true
-    })
-      .then(response => {
-        this.user = response.data.user
-        this.todoList = response.data.todoList
-        if (response.data.user == null) {
-          this.$router.push('/login')
-          location.reload()
-        }
-      })
-      .catch(err => {
-        console.error(err)
-      })
+    this.reloadTodoList()
 
     this.axios.get('http://localhost:8888/userList', {
     })
@@ -112,6 +99,22 @@ export default {
       })
   },
   methods: {
+    reloadTodoList: function (e) {
+      this.axios.get('http://localhost:8888/todoList', {
+        withCredentials: true
+      })
+        .then(response => {
+          this.user = response.data.user
+          this.todoList = response.data.todoList
+          if (response.data.user == null) {
+            this.$router.push('/login')
+            location.reload()
+          }
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    },
     showCheckBoxes: function (e) {
       var checkboxes = document.getElementById('checkboxes')
       if (!this.expanded && e.target.closest('.multiselect')) {
@@ -137,13 +140,18 @@ export default {
         withCredentials: true,
         params: {
           todo: this.todo,
-          date: this.datetime,
+          date: document.getElementById('datetime-flatpickr').value,
           shareUsers: this.checkedUser
         }
       })
         .then(response => {
           if (response.data.success) {
-            location.reload()
+            this.todo = ''
+            this.datetime = ''
+            document.getElementById('datetime-flatpickr').value = ''
+            this.checkedUser = []
+            this.reloadTodoList()
+            this.updatePlaceholder()
           } else {
             alert('failed')
           }
@@ -161,7 +169,7 @@ export default {
       })
         .then(response => {
           if (response.data.success) {
-            location.reload()
+            this.reloadTodoList()
           } else {
             alert('failed')
           }
@@ -179,7 +187,7 @@ export default {
       })
         .then(response => {
           if (response.data.success) {
-            location.reload()
+            this.reloadTodoList()
           } else {
             alert('failed')
           }

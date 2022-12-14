@@ -39,7 +39,14 @@ func main() {
   user.Init()
 
   //routing
-  r.GET("/", func(c *gin.Context){
+  r.GET("/user", func(c *gin.Context){
+    session := sessions.Default(c)
+    loginedUser := session.Get("id")
+
+    c.JSON(http.StatusOK, gin.H{"user" : loginedUser})
+  })
+
+  r.GET("/todoList", func(c *gin.Context){
     session := sessions.Default(c)
     loginedUser := session.Get("id")
     loginedUserStr, ok := loginedUser.(string)
