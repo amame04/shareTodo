@@ -1,9 +1,9 @@
 <template>
   <div id="todoForm" class="mx-auto py-3">
 
-    <form class="row mx-2" action="request.php?request=new" method="post">
+    <form id="newTodo" class="row mx-2" action="request.php?request=new" method="post">
       <!-- CSRFトークン -->
-      <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+      <input type="hidden" name="token" v-bind:value="token">
       <div class="col">
         <input class="form-control mx-2" type="text" name="todo" placeholder="やること" autofocus required>
       </div>
@@ -13,50 +13,46 @@
       <div class="col-sm-2">
         <div class="form-control">
           <!-- ユーザー名一覧をプルダウンチェックリストで表示-->
-          <select multiple="multiple" id="select" class="mx-1" name="shareUser[]" placeholder="共有">
-            <!-- ユーザー一覧を取得 -->
-            <option v-for="item in userList" v-bind:value="item.id">{{ item.id }}</option>
-          </select>
+          <div class="multiselect">
+            <div class="selectBox mx-1">
+              <select disabled>
+                <option>{{ selectPlaceholder }}</option>
+              </select>
+              <div class="overSelect"></div>
+            </div>
+            <div id="checkboxes" class="mx-2">
+              <label class="text-start" v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
+                <input type="checkbox" class="mx-1" name="shareUser[]" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">{{ item.id }}
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
       <button class="btn btn-primary col-auto mx-3" type="submit">追加</button>
     </form>
 
-    <div class="mx-4 text-center">
-      <!-- 該当するTODOを表示 -->
-      <!--
-      $deleteBtn = '<button class="btn btn-primary col-auto mx-2 deleteBtn" formaction="request.php?request=delete" type="submit">削除</button>';
+    <div id="todoList" class="mx-4 text-center">
 
-      $doneBtn = '';
-      if ($value['done'] != true) {
-        $doneBtn = '<button class="btn btn-primary col-auto mx-2" formaction="request.php?request=done" type="submit">完了</button>';
-      }
-
-        $shareUsers .= '<p class="card-text text-success d-inline mx-2"><i class="bi bi-check-square"></i>';
-      } else {
-        $shareUsers .= '<p class="card-text text-danger d-inline mx-2"><i class="bi bi-square"></i>';
-      }
-      -->
-
-      <div class="card mx-auto my-2" v-for="item in todoList">
+      <div class="card mx-auto my-2" v-for="item in todoList" v-bind:key="item.todoId">
         <div class="card-body">
           <h5 class="card-title">{{ item.todoContent }}</h5>
           <p class="card-text text-muted">{{ item.todoDate }}</p>
-          <p class="card-text text-danger d-inline mx-2">
-            <i class="bi bi-square"></i>
-            $shareUsers
-          </p>
-          <p class="card-text text-success d-inline mx-2">
-            <i class="bi bi-check-square"></i>
-            $shareUsers
+          <p class="card-text d-inline mx-2" v-for="user in item.shareUsers" v-bind:key="user.user">
+            <span class="text-danger" v-if="user.doneFlag">
+              <i class="bi bi-square"></i>
+              {{ user.user }}
+            </span>
+            <span class="text-danger" v-else>
+              <i class="bi bi-square"></i>
+              {{ user.user }}
+            </span>
           </p>
           <form method="post">
-            <input type="hidden" name="token" value="$csrfToken">
+            <input type="hidden" name="token" v-bind:value="token">
             <input type="hidden" name="todoid" v-bind:value="item.todoId">
-            <button class="btn btn-primary col-auto mx-2" formaction="" type="submit" v-if="!item.deleteFlag">完了</button>
-
-            <button class="btn btn-primary col-auto mx-2 deleteBtn" formaction="request.php?request=delete" type="submit" v-if="!item.deleteFlag">削除</button>
+            <button class="btn btn-primary col-auto mx-2" formaction="" type="submit" v-if="!item.doneFlag">完了</button>
+            <button class="btn btn-primary col-auto mx-2 deleteBtn" formaction="request.php?request=delete" type="submit" v-if="item.createdUser == user">削除</button>
           </form>
         </div>
       </div>
@@ -82,7 +78,11 @@ export default {
       },
       userList: '',
       user: null,
-      todoList: null
+      todoList: null,
+      expand: false,
+      selectPlaceholder: '共有',
+      checkedUser: [],
+      token: ''
     }
   },
   components: {
@@ -92,20 +92,20 @@ export default {
     this.axios.get('http://localhost:8888/', {
       withCredentials: true
     })
-    .then(response => {
-      this.user = response.data.user
-      this.todoList = response.data.todoList
-      if (response.data.user == null) {
-        this.$router.push('/login')
-        location.reload()
-      }
-    })
-    .catch(err => {
-      console.error(err)
-    })
+      .then(response => {
+        this.user = response.data.user
+        this.todoList = response.data.todoList
+        if (response.data.user == null) {
+          this.$router.push('/login')
+          location.reload()
+        }
+      })
+      .catch(err => {
+        console.error(err)
+      })
 
     this.axios.get('http://localhost:8888/userList', {
-      })
+    })
       .then(response => {
         this.userList = response.data.userList
       })
@@ -113,11 +113,35 @@ export default {
         console.error(err)
       })
   },
+  methods: {
+    showCheckBoxes: function (e) {
+      var checkboxes = document.getElementById('checkboxes')
+      if (!this.expanded && e.target.closest('.multiselect')) {
+        checkboxes.style.display = 'block'
+        this.expanded = true
+      } else {
+        checkboxes.style.display = 'none'
+        this.expanded = false
+      }
+    },
+    updatePlaceholder: function () {
+      if (this.checkedUser.length === 0) {
+        this.selectPlaceholder = '共有'
+      } else {
+        this.selectPlaceholder = ''
+        for (var user of this.checkedUser) {
+          this.selectPlaceholder += user + ', '
+        }
+      }
+    }
+  },
+  mounted: function () {
+    document.addEventListener('click', (e) => this.showCheckBoxes(e), false)
+  },
+  destroyed: function () {
+    document.removeEventListener('click', (e) => this.showCheckBoxes(e), false)
+  }
 }
-
-$(function () {
-  $('#select').multipleSelect()
-})
 </script>
 
 <style>
@@ -133,5 +157,58 @@ $(function () {
 .flatpickr-weekdays .flatpickr-weekday:nth-child(7),
 .flatpickr-days .flatpickr-day:not(.flatpickr-disabled):not(.prevMonthDay):not(.nextMonthDay):nth-child(7n) {
     color: #172dee;
+}
+
+#newTodo {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+}
+
+#newTodo > button {
+  height: 100%;
+}
+
+#todoList {
+  position: relative;
+  margin-top: 3em;
+}
+
+.multiselect {
+  /*width: 200px;*/
+  position: relative;
+}
+
+.selectBox {
+  position: relative;
+}
+
+.selectBox select {
+  width: 100%;
+}
+
+.overSelect {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.selectBox > select{
+  border: none;
+}
+
+#checkboxes {
+  display: none;
+}
+
+#checkboxes label {
+  display: block;
+}
+
+#checkboxes label:hover {
+  background-color: #1e90ff;
 }
 </style>

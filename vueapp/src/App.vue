@@ -16,7 +16,7 @@
 <script>
 export default {
   name: 'App',
-  data() {
+  data () {
     return {
       username: ''
     }
@@ -25,12 +25,12 @@ export default {
     this.axios.get('http://localhost:8888', {
       withCredentials: true
     })
-    .then(response => {
-      this.username = response.data.user
-    })
-    .catch(err => {
-      console.error(err)
-    })
+      .then(response => {
+        this.username = response.data.user
+      })
+      .catch(err => {
+        console.error(err)
+      })
   }
 }
 </script>

@@ -29,7 +29,7 @@
 
 <script>
 export default {
-  data() {
+  data () {
     return {
       path: '',
       submit: '',
@@ -47,13 +47,13 @@ export default {
       location.reload()
     }
   },
-  mounted() {
+  mounted () {
     this.path = this.$route.path
-    if (this.path == '/login') {
+    if (this.path === '/login') {
       this.submit = 'ログイン'
       this.link = '/register'
       this.link_str = '新規会員登録'
-    } else if (this.path == '/register') {
+    } else if (this.path === '/register') {
       this.submit = '登録'
       this.link = '/login'
       this.link_str = 'ログイン'
@@ -65,55 +65,56 @@ export default {
   },
   methods: {
     exec: function () {
-      if (this.path == '/logout') {
-        var func = '/login'
+      var func = ''
+      if (this.path === '/logout') {
+        func = '/login'
       } else {
-        var func = this.path
+        func = this.path
       }
-      this.axios.get('http://localhost:8888'+func, {
+      this.axios.get('http://localhost:8888' + func, {
         withCredentials: true,
         params: {
           id: this.id,
           password: this.password
         }
       })
-      .then(response => {
-        console.log(response.data)
-        if (response.data.success) {
-          switch (this.path) {
-            case '/login':
-              this.message = '認証に成功しました'
-              this.$router.push('/')
-              location.reload()
-              break
-            case '/register':
-              this.message = '登録が完了しました'
-              this.result = true;
-              break
+        .then(response => {
+          console.log(response.data)
+          if (response.data.success) {
+            switch (this.path) {
+              case '/login':
+                this.message = '認証に成功しました'
+                this.$router.push('/')
+                location.reload()
+                break
+              case '/register':
+                this.message = '登録が完了しました'
+                this.result = true
+                break
+            }
+            this.error_message = ''
+          } else {
+            switch (this.path) {
+              case '/login':
+                this.message = ''
+                this.error_message = '認証に失敗しました'
+                break
+              case '/logout':
+                this.message = 'ログアウトしました'
+                this.error_message = ''
+                break
+              case '/register':
+                this.message = ''
+                this.error_message = '同じユーザー名が存在しています'
+                break
+            }
           }
-          this.error_message = ''
-            
-        } else {
-          switch (this.path) {
-            case '/login':
-              this.message = ''
-              this.error_message = '認証に失敗しました'
-              break
-            case '/logout':
-              this.message = 'ログアウトしました'
-              this.error_message = ''
-              break
-            case '/register':
-              this.message = ''
-              this.error_message = '同じユーザー名が存在しています'
-              break
-          }
-        }
-      })
-      .catch(err => {
-        this.message = ''
-        this.error_message = '接続に失敗しました'
-      })
+        })
+        .catch(err => {
+          console.log(err)
+          this.message = ''
+          this.error_message = '接続に失敗しました'
+        })
     }
   }
 }

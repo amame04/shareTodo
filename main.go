@@ -1,16 +1,17 @@
 package main
 
 import (
-  "net/http"
-  "database/sql"
+	"database/sql"
+	"net/http"
+	"strconv"
 
-  "github.com/gin-contrib/cors"
-  "github.com/gin-contrib/sessions"
-  "github.com/gin-contrib/sessions/cookie"
-  "github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-gonic/gin"
 
-  "sampleapp/DB"
-  "sampleapp/user"
+	"sampleapp/DB"
+	"sampleapp/user"
 )
 
 var db *sql.DB
@@ -78,6 +79,37 @@ func main() {
     c.JSON(http.StatusOK, gin.H{"success" : success})
   })
 
+  r.GET("/registerTodo", func(c *gin.Context){
+    session := sessions.Default(c)
+    loginedUser := session.Get("id")
+    loginedUserStr, ok := loginedUser.(string)
+
+    todo := c.Query("todo")
+    date := c.Query("date")
+    share := c.QueryArray("shareUsers")
+    success := ok && user.RegisterTodo(loginedUserStr, todo, date, share)
+    c.JSON(http.StatusOK, gin.H{"success" : success})
+  })
+
+  r.GET("/doneTodo", func(c *gin.Context){
+    session := sessions.Default(c)
+    loginedUser := session.Get("id")
+    loginedUserStr, ok := loginedUser.(string)
+
+    todoId, err := strconv.Atoi(c.Query("todoId"))
+    success := ok && err != nil && user.DoneTodo(loginedUserStr, todoId)
+    c.JSON(http.StatusOK, gin.H{"success" : success})
+  })
+
+  r.GET("/deleteTodo", func(c *gin.Context){
+    session := sessions.Default(c)
+    loginedUser := session.Get("id")
+    loginedUserStr, ok := loginedUser.(string)
+
+    todoId, err := strconv.Atoi(c.Query("todoId"))
+    success := ok && err != nil && user.DeleteTodo(loginedUserStr, todoId)
+    c.JSON(http.StatusOK, gin.H{"success" : success})
+  })
+
   r.Run(":8888")
 }
-
