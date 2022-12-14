@@ -1,14 +1,14 @@
 <template>
   <div id="todoForm" class="mx-auto py-3">
 
-    <form id="newTodo" class="row mx-2" action="request.php?request=new" method="post">
+    <form id="newTodo" class="row mx-4" @submit.prevent="registerTodo">
       <!-- CSRFトークン -->
       <input type="hidden" name="token" v-bind:value="token">
       <div class="col">
-        <input class="form-control mx-2" type="text" name="todo" placeholder="やること" autofocus required>
+        <input v-model="todo" class="form-control" type="text" placeholder="やること" autofocus required>
       </div>
       <div class="col-sm-2">
-        <flat-pickr v-model="date" :config="config" placeholder="いつまで" name="date" class="form-control mx-2"></flat-pickr>
+        <flat-pickr v-model="datetime" :config="config" placeholder="いつまで" class="form-control"></flat-pickr>
       </div>
       <div class="col-sm-2">
         <div class="form-control">
@@ -22,25 +22,24 @@
             </div>
             <div id="checkboxes" class="mx-2">
               <label class="text-start" v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
-                <input type="checkbox" class="mx-1" name="shareUser[]" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">{{ item.id }}
+                <input type="checkbox" class="mx-1" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">{{ item.id }}
               </label>
             </div>
           </div>
         </div>
       </div>
-
-      <button class="btn btn-primary col-auto mx-3" type="submit">追加</button>
+      <button class="btn btn-primary col-auto" type="submit">追加</button>
     </form>
 
     <div id="todoList" class="mx-4 text-center">
 
-      <div class="card mx-auto my-2" v-for="item in todoList" v-bind:key="item.todoId">
+      <div class="card my-2" v-for="item in todoList" v-bind:key="item.todoId">
         <div class="card-body">
           <h5 class="card-title">{{ item.todoContent }}</h5>
           <p class="card-text text-muted">{{ item.todoDate }}</p>
           <p class="card-text d-inline mx-2" v-for="user in item.shareUsers" v-bind:key="user.user">
-            <span class="text-danger" v-if="user.doneFlag">
-              <i class="bi bi-square"></i>
+            <span class="text-success" v-if="user.doneFlag">
+              <i class="bi bi-check-square"></i>
               {{ user.user }}
             </span>
             <span class="text-danger" v-else>
@@ -48,15 +47,13 @@
               {{ user.user }}
             </span>
           </p>
-          <form method="post">
-            <input type="hidden" name="token" v-bind:value="token">
-            <input type="hidden" name="todoid" v-bind:value="item.todoId">
-            <button class="btn btn-primary col-auto mx-2" formaction="" type="submit" v-if="!item.doneFlag">完了</button>
-            <button class="btn btn-primary col-auto mx-2 deleteBtn" formaction="request.php?request=delete" type="submit" v-if="item.createdUser == user">削除</button>
-          </form>
+          <div>
+            <button class="btn btn-primary col-auto mx-2" v-on:click="doneTodo(item.todoId)" v-if="!item.doneFlag">完了</button>
+            <button class="btn btn-primary col-auto mx-2 deleteBtn" v-on:click="deleteTodo(item.todoId)" v-if="item.createdUser == user">削除</button>
+          </div>
         </div>
       </div>
-      <h4 v-if="todoList == null">TODOを追加しましょう!</h4>
+      <h4 v-if="todoList == null">TODOを追加しましょう! {{datetime}}</h4>
     </div>
 
   </div>
@@ -70,7 +67,6 @@ import {Japanese} from 'flatpickr/dist/l10n/ja.js'
 export default {
   data () {
     return {
-      date: null,
       config: {
         locale: Japanese,
         dateFormat: 'Y-m-d H:i',
@@ -81,6 +77,8 @@ export default {
       todoList: null,
       expand: false,
       selectPlaceholder: '共有',
+      todo: '',
+      datetime: '',
       checkedUser: [],
       token: ''
     }
@@ -133,6 +131,62 @@ export default {
           this.selectPlaceholder += user + ', '
         }
       }
+    },
+    registerTodo: function () {
+      this.axios.get('http://localhost:8888/registerTodo', {
+        withCredentials: true,
+        params: {
+          todo: this.todo,
+          date: this.datetime,
+          shareUsers: this.checkedUser
+        }
+      })
+        .then(response => {
+          if (response.data.success) {
+            location.reload()
+          } else {
+            alert('failed')
+          }
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    },
+    doneTodo: function (todoId) {
+      this.axios.get('http://localhost:8888/doneTodo', {
+        withCredentials: true,
+        params: {
+          todoId: todoId
+        }
+      })
+        .then(response => {
+          if (response.data.success) {
+            location.reload()
+          } else {
+            alert('failed')
+          }
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    },
+    deleteTodo: function (todoId) {
+      this.axios.get('http://localhost:8888/deleteTodo', {
+        withCredentials: true,
+        params: {
+          todoId: todoId
+        }
+      })
+        .then(response => {
+          if (response.data.success) {
+            location.reload()
+          } else {
+            alert('failed')
+          }
+        })
+        .catch(err => {
+          console.error(err)
+        })
     }
   },
   mounted: function () {
@@ -159,6 +213,15 @@ export default {
     color: #172dee;
 }
 
+#todoForm {
+  width: 100%;
+}
+
+.row>.col,
+.row>.col-sm-2 {
+  padding-left: 0;
+}
+
 #newTodo {
   position: absolute;
   z-index: 1;
@@ -171,7 +234,6 @@ export default {
 }
 
 #todoList {
-  position: relative;
   margin-top: 3em;
 }
 

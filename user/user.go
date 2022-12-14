@@ -239,14 +239,14 @@ func DoneTodo(user string, todoid int) bool {
     return false
   }
 
-  sql, err := db.Prepare("UPDATE share SET done = true WHERE id = ? AND user = ?")
+  sql, err := db.Prepare("UPDATE share SET done = true WHERE user = ? AND id = ?")
   if err != nil {
     return false
   }
   defer sql.Close()
 
   _, err = sql.Exec(user, todoid)
-  return err != nil
+  return err == nil
 }
 
 func DeleteTodo(user string, todoid int) bool {
@@ -255,12 +255,12 @@ func DeleteTodo(user string, todoid int) bool {
     return false
   }
 
-  sql, err := db.Prepare("UPDATE todo SET deleteFlag = true WHERE id = ? AND user = ?")
+  sql, err := db.Prepare("UPDATE todo SET deleteFlag = true WHERE user = ? AND id = ?")
   if err != nil {
     return false
   }
   defer sql.Close()
 
   _, err = sql.Exec(user, todoid)
-  return err != nil
+  return err == nil
 }

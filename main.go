@@ -86,7 +86,7 @@ func main() {
 
     todo := c.Query("todo")
     date := c.Query("date")
-    share := c.QueryArray("shareUsers")
+    share := c.QueryArray("shareUsers[]")
     success := ok && user.RegisterTodo(loginedUserStr, todo, date, share)
     c.JSON(http.StatusOK, gin.H{"success" : success})
   })
@@ -97,7 +97,7 @@ func main() {
     loginedUserStr, ok := loginedUser.(string)
 
     todoId, err := strconv.Atoi(c.Query("todoId"))
-    success := ok && err != nil && user.DoneTodo(loginedUserStr, todoId)
+    success := ok && err == nil && user.DoneTodo(loginedUserStr, todoId)
     c.JSON(http.StatusOK, gin.H{"success" : success})
   })
 
@@ -107,7 +107,7 @@ func main() {
     loginedUserStr, ok := loginedUser.(string)
 
     todoId, err := strconv.Atoi(c.Query("todoId"))
-    success := ok && err != nil && user.DeleteTodo(loginedUserStr, todoId)
+    success := ok && err == nil && user.DeleteTodo(loginedUserStr, todoId)
     c.JSON(http.StatusOK, gin.H{"success" : success})
   })
 
