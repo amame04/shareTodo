@@ -1,38 +1,7 @@
 <template>
   <div id="todoForm" class="mx-auto py-3">
 
-    <form id="newTodo" class="row mx-4" @submit.prevent="registerTodo">
-      <!-- CSRFトークン -->
-      <input type="hidden" name="token" v-bind:value="token">
-      <div class="col">
-        <input v-model="todo" class="form-control" type="text" placeholder="やること" autofocus required>
-      </div>
-      <div class="col-sm-2">
-        <flat-pickr id="datetime-flatpickr" v-bind:modelValue="datetime" :config="config" placeholder="いつまで" class="form-control"></flat-pickr>
-      </div>
-      <div class="col-sm-2">
-        <div class="form-control">
-          <!-- ユーザー名一覧をプルダウンチェックリストで表示-->
-          <div class="multiselect">
-            <div class="selectBox mx-1">
-              <select disabled>
-                <option>{{ selectPlaceholder }}</option>
-              </select>
-              <div class="overSelect"></div>
-            </div>
-            <div id="checkboxes" class="mx-2">
-              <label class="text-start" v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
-                <input type="checkbox" class="mx-1" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">{{ item.id }}
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <button class="btn btn-primary col-auto" type="submit">追加</button>
-    </form>
-
     <div id="todoList" class="mx-4 text-center">
-
       <div class="card my-2" v-for="item in todoList" v-bind:key="item.todoId">
         <div class="card-body">
           <h5 class="card-title">{{ item.todoContent }}</h5>
@@ -48,12 +17,56 @@
             </span>
           </p>
           <div>
-            <button class="btn btn-primary col-auto mx-2" v-on:click="doneTodo(item.todoId)" v-if="!item.doneFlag">完了</button>
-            <button class="btn btn-primary col-auto mx-2 deleteBtn" v-on:click="deleteTodo(item.todoId)" v-if="item.createdUser == user">削除</button>
+            <button class="btn btn-primary col-auto mx-2" v-on:click="doneTodo(item.todoId)" v-if="!item.doneFlag">
+              <i class="bi bi-check-lg"></i>
+            </button>
+            <button class="btn btn-primary col-auto mx-2 deleteBtn" v-on:click="deleteTodo(item.todoId)" v-if="item.createdUser == user">
+              <i class="bi bi-trash"></i>
+            </button>
           </div>
         </div>
       </div>
       <h4 v-if="todoList == null">TODOを追加しましょう!</h4>
+    </div>
+
+    <button class="btn btn-primary col-auto mx-3 mb-3 modalButton" v-on:click="popUpModal()">
+      <i class="bi bi-plus-lg"></i>
+    </button>
+    <div class="modal_wrap">
+      <input id="trigger" type="checkbox" style="display:none">
+
+      <div class="modal_overlay">
+        <label for="trigger" class="modal_trigger"></label>
+        <div class="modal_content my-auto py-3">
+          <label for="trigger" class="close_button">&#x2716;&#xfe0f;</label>
+
+          <div id="newTodo" class="py-5 px-3">
+            <div class="py-1">
+              <input v-model="todo" class="form-control" type="text" placeholder="やること" autofocus required>
+            </div>
+            <div class="py-1">
+              <flat-pickr id="datetime-flatpickr" v-bind:modelValue="datetime" :config="config" placeholder="いつまで" class="form-control"></flat-pickr>
+            </div>
+            <div class="py-1 mb-3">
+              <!-- ユーザー名一覧をプルダウンチェックリストで表示-->
+              <div class="multiselect">
+                <div class="selectBox">
+                  <input type="text" class="form-control" v-bind:placeholder="selectPlaceholder" disabled>
+                </div>
+                <div id="checkboxes">
+                  <label class="text-start" v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
+                    <input type="checkbox" class="mx-1" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">{{ item.id }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary col-auto mx-auto mb-3" v-on:click="registerTodo">
+              <i class="bi bi-pen"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
     </div>
 
   </div>
@@ -113,6 +126,8 @@ export default {
         })
         .catch(err => {
           console.error(err)
+          this.$router.push('/login')
+          location.reload()
         })
     },
     showCheckBoxes: function (e) {
@@ -148,10 +163,14 @@ export default {
           if (response.data.success) {
             this.todo = ''
             this.datetime = ''
-            document.getElementById('datetime-flatpickr').value = ''
             this.checkedUser = []
             this.reloadTodoList()
             this.updatePlaceholder()
+            this.popUpModal()
+            document.getElementById('datetime-flatpickr').value = ''
+            if ('value' in document.getElementsByClassName('flatpickr-mobile')) {
+              document.getElementsByClassName('flatpickr-mobile')[0].value = ''
+            }
           } else {
             alert('failed')
           }
@@ -195,6 +214,9 @@ export default {
         .catch(err => {
           console.error(err)
         })
+    },
+    popUpModal: function () {
+      document.getElementById('trigger').checked = !document.getElementById('trigger').checked
     }
   },
   mounted: function () {
@@ -231,10 +253,6 @@ export default {
 }
 
 #newTodo {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  right: 0;
 }
 
 #newTodo > button {
@@ -242,7 +260,7 @@ export default {
 }
 
 #todoList {
-  margin-top: 3em;
+  /* */
 }
 
 .multiselect {
@@ -262,7 +280,6 @@ export default {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
   bottom: 0;
 }
 
@@ -279,6 +296,62 @@ export default {
 }
 
 #checkboxes label:hover {
-  background-color: #1e90ff;
+  background-color: #eeeeee;
+}
+
+/* modal */
+.modalButton {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  font-size: 1.5rem;
+}
+
+.modal_overlay{
+  display: flex;
+  justify-content: center;
+  overflow: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  opacity: 0;
+  transition: opacity 0.5s, transform 0s 0.5s;
+  transform: scale(0);
+}
+
+.modal_trigger{
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.modal_content{
+  border-radius: 1rem;
+  width: 90%;
+  height: 90%;
+  box-sizing: border-box;
+  background: #fff;
+  line-height: 1.4em;
+  transform: scale(0.3);
+  transition: 0.5s;
+}
+
+.close_button{
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal_wrap input:checked ~ .modal_overlay{
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.5s;
+}
+
+.modal_wrap input:checked ~ .modal_overlay .modal_content{
+  transform: scale(1);
 }
 </style>
