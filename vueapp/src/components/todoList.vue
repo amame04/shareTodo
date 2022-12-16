@@ -55,7 +55,7 @@
                 </div>
                 <div id="checkboxes" class="text-start">
                   <div v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
-                    <input v-bind:id="item.id" type="checkbox" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">
+                    <input v-bind:id="item.id" type="checkbox" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder" disabled>
                     <label v-bind:for="item.id">{{item.id}}</label>
                   </div>
                 </div>
@@ -138,8 +138,12 @@ export default {
         var expanded = checkboxes.classList.contains('-visible')
         if (!expanded && e.target.closest('.selectBox')) {
           checkboxes.classList.add('-visible')
+          document.querySelectorAll("#checkboxes input").forEach( e => e.disabled = false)
+          document.querySelectorAll("#checkboxes label").forEach( e => e.style.cursor = 'pointer')
         } else if (expanded && !e.target.closest('#checkboxes')) {
           checkboxes.classList.remove('-visible')
+          document.querySelectorAll("#checkboxes input").forEach( e => e.disabled = true)
+          document.querySelectorAll("#checkboxes label").forEach( e => e.style.cursor = 'default')
         }
       }
     },
@@ -296,10 +300,12 @@ export default {
 @keyframes fadeIn {
   0% {
     opacity: 0;
+    cursor: default;
   }
 
   100% {
     opacity: 1;
+    cursor: pointer;
   }
 }
 
@@ -342,7 +348,7 @@ export default {
   background-color: #6a8494;
   box-shadow: 0 0 0.1em rgba(0, 0, 0, .2);
   white-space: nowrap;
-  cursor: pointer;
+  cursor: default;
   user-select: none;
   transition: background-color .2s, box-shadow .2s;
 }
