@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	csrf "github.com/utrack/gin-csrf"
 
 	"sampleapp/DB"
 	"sampleapp/user"
@@ -17,106 +19,132 @@ import (
 var db *sql.DB
 
 func main() {
-  r := gin.Default()
-  store := cookie.NewStore([]byte("secret"))
+	r := gin.Default()
+	store := cookie.NewStore([]byte("secret"))
 
-  r.Use(sessions.Sessions("session", store))
-  //r.Static("/views", "./views")
+	r.Use(sessions.Sessions("session", store))
+	//r.Static("/views", "./views")
 
-  r.Use(cors.New(cors.Config{
-    AllowOrigins: []string{
-      "http://localhost:8080",
-    },
-    AllowCredentials: true,
-  }))
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:8080",
+		},
+		AllowMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+		},
+		AllowHeaders: []string{
+			"X-CSRF-TOKEN",
+		},
+		AllowCredentials: true,
+	}))
 
-  //db
-  DB.DBinit()
-  db = DB.DB
-  defer db.Close()
+	secret := func(length int) string {
+		const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		b := make([]byte, length)
+		for i := range b {
+			b[i] = letters[rand.Intn(len(letters))]
+		}
+		return string(b)
+	}
+	r.Use(csrf.Middleware(csrf.Options{
+		Secret: secret(32),
+		ErrorFunc: func(c *gin.Context) {
+			c.String(400, "CSRF token mismatch")
+			c.Abort()
+		},
+	}))
 
-  //user init
-  user.Init()
+	//db
+	DB.DBinit()
+	db = DB.DB
+	defer db.Close()
 
-  //routing
-  r.GET("/user", func(c *gin.Context){
-    session := sessions.Default(c)
-    loginedUser := session.Get("id")
+	//user init
+	user.Init()
 
-    c.JSON(http.StatusOK, gin.H{"user" : loginedUser})
-  })
+	//routing
+	r.GET("/user", func(c *gin.Context) {
+		session := sessions.Default(c)
+		loginedUser := session.Get("id")
 
-  r.GET("/todoList", func(c *gin.Context){
-    session := sessions.Default(c)
-    loginedUser := session.Get("id")
-    loginedUserStr, ok := loginedUser.(string)
+		c.JSON(http.StatusOK, gin.H{"user": loginedUser, "token": csrf.GetToken(c)})
+	})
 
-    var todoList []user.Todo
-    if ok && loginedUserStr != ""{
-      todoList = user.GetTodoList(loginedUserStr)
-    }
+	r.GET("/todoList", func(c *gin.Context) {
+		session := sessions.Default(c)
+		loginedUser := session.Get("id")
+		loginedUserStr, ok := loginedUser.(string)
 
-    c.JSON(http.StatusOK, gin.H{"user" : loginedUser, "todoList" : todoList})
-  })
+		var todoList []user.Todo
+		if ok && loginedUserStr != "" {
+			todoList = user.GetTodoList(loginedUserStr)
+		}
 
-  r.GET("/userList", func(c *gin.Context){
-    userList := user.GetUserList()
-    c.JSON(http.StatusOK, gin.H{"userList" : userList})
-  })
+		c.JSON(http.StatusOK, gin.H{"user": loginedUser, "todoList": todoList})
+	})
 
-  r.GET("/login", func(c *gin.Context){
-    id := c.Query("id")
-    pass := c.Query("password")
-    success := user.LoginUser(id, pass)
+	r.GET("/userList", func(c *gin.Context) {
+		userList := user.GetUserList()
+		c.JSON(http.StatusOK, gin.H{"userList": userList})
+	})
 
-    session := sessions.Default(c)
-    session.Clear()
-    if success {
-      session.Set("id", id)
-    }
-    session.Save()
+	r.POST("/login", func(c *gin.Context) {
+		id := c.PostForm("id")
+		pass := c.PostForm("password")
+		success := user.LoginUser(id, pass)
 
-    c.JSON(http.StatusOK, gin.H{"success" : success})
-  })
+		session := sessions.Default(c)
+		session.Clear()
+		if success {
+			session.Set("id", id)
+		}
+		session.Save()
 
-  r.GET("/register", func(c *gin.Context){
-    id := c.Query("id")
-    pass := c.Query("password")
-    success := user.RegisterUser(id, pass)
-    c.JSON(http.StatusOK, gin.H{"success" : success})
-  })
+		c.JSON(http.StatusOK, gin.H{"success": success})
+	})
 
-  r.GET("/registerTodo", func(c *gin.Context){
-    session := sessions.Default(c)
-    loginedUser := session.Get("id")
-    loginedUserStr, ok := loginedUser.(string)
+	r.POST("/register", func(c *gin.Context) {
+		id := c.PostForm("id")
+		pass := c.PostForm("password")
+		success := user.RegisterUser(id, pass)
+		c.JSON(http.StatusOK, gin.H{"success": success})
+	})
 
-    todo := c.Query("todo")
-    date := c.Query("date")
-    share := c.QueryArray("shareUsers[]")
-    success := ok && user.RegisterTodo(loginedUserStr, todo, date, share)
-    c.JSON(http.StatusOK, gin.H{"success" : success})
-  })
+	r.POST("/registerTodo", func(c *gin.Context) {
+		session := sessions.Default(c)
+		loginedUser := session.Get("id")
+		loginedUserStr, ok := loginedUser.(string)
 
-  r.GET("/doneTodo", func(c *gin.Context){
-    session := sessions.Default(c)
-    loginedUser := session.Get("id")
-    loginedUserStr, ok := loginedUser.(string)
+		todo := c.PostForm("todo")
+		date := c.PostForm("date")
+		share := c.PostFormArray("shareUsers")
+		success := ok && user.RegisterTodo(loginedUserStr, todo, date, share)
+		c.JSON(http.StatusOK, gin.H{"success": success})
+	})
 
-    todoId, err := strconv.Atoi(c.Query("todoId"))
-    success := ok && err == nil && user.DoneTodo(loginedUserStr, todoId)
-    c.JSON(http.StatusOK, gin.H{"success" : success})
-  })
+	r.PATCH("/doneTodo", func(c *gin.Context) {
+		session := sessions.Default(c)
+		loginedUser := session.Get("id")
+		loginedUserStr, ok := loginedUser.(string)
 
-  r.GET("/deleteTodo", func(c *gin.Context){
-    session := sessions.Default(c)
-    loginedUser := session.Get("id")
-    loginedUserStr, ok := loginedUser.(string)
+		todoId, err := strconv.Atoi(c.PostForm("todoId"))
+		success := ok && err == nil && user.DoneTodo(loginedUserStr, todoId)
+		c.JSON(http.StatusOK, gin.H{"success": success})
+	})
 
-    todoId, err := strconv.Atoi(c.Query("todoId"))
-    success := ok && err == nil && user.DeleteTodo(loginedUserStr, todoId)
-    c.JSON(http.StatusOK, gin.H{"success" : success})
-  })
+	r.DELETE("/deleteTodo", func(c *gin.Context) {
+		session := sessions.Default(c)
+		loginedUser := session.Get("id")
+		loginedUserStr, ok := loginedUser.(string)
 
-  r.Run(":8888")
+		todoId, err := strconv.Atoi(c.Query("todoId"))
+		success := ok && err == nil && user.DeleteTodo(loginedUserStr, todoId)
+		c.JSON(http.StatusOK, gin.H{"success": success})
+	})
+
+	r.Run(":8888")
 }

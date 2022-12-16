@@ -16,5 +16,24 @@ new Vue({
   el: '#app',
   router,
   components: { App },
-  template: '<App/>'
+  template: '<App/>',
+  data () {
+    return {
+      ApiServer: 'http://localhost:8888'
+    }
+  },
+  methods: {
+    getCSRFToken: function () {
+      this.axios.get(this.$root.ApiServer + '/user', {
+        withCredentials: true
+      })
+        .then(response => {
+          this.token = response.data.token
+          return this.token
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    }
+  }
 })

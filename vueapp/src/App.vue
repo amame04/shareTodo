@@ -23,19 +23,26 @@ export default {
   },
   watch: {
     $route () {
-      location.reload()
+      this.reload()
     }
   },
   created () {
-    this.axios.get('http://localhost:8888/user', {
-      withCredentials: true
-    })
-      .then(response => {
-        this.username = response.data.user
+    this.reload()
+    this.$root.reload = this.reload
+  },
+  methods: {
+    reload: async function () {
+      await this.axios.get(this.$root.ApiServer + '/user', {
+        withCredentials: true
       })
-      .catch(err => {
-        console.error(err)
-      })
+        .then(response => {
+          this.username = response.data.user
+          this.$root.token = response.data.token
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    }
   }
 }
 </script>

@@ -44,48 +44,55 @@ export default {
   },
   watch: {
     $route () {
-      location.reload()
+      this.reload()
     }
   },
   mounted () {
-    this.path = this.$route.path
-    if (this.path === '/login') {
-      this.submit = 'ログイン'
-      this.link = '/register'
-      this.link_str = '新規会員登録'
-    } else if (this.path === '/register') {
-      this.submit = '登録'
-      this.link = '/login'
-      this.link_str = 'ログイン'
-    } else {
-      this.link = '/login'
-      this.link_str = 'ログイン'
-      this.exec()
-    }
+    this.reload()
   },
   methods: {
-    exec: function () {
+    reload: async function () {
+      this.path = this.$route.path
+      this.message = ''
+      this.error_message = ''
+      if (this.path === '/login') {
+        this.submit = 'ログイン'
+        this.link = '/register'
+        this.link_str = '新規会員登録'
+      } else if (this.path === '/register') {
+        this.submit = '登録'
+        this.link = '/login'
+        this.link_str = 'ログイン'
+      } else {
+        this.link = '/login'
+        this.link_str = 'ログイン'
+        await this.exec()
+      }
+    },
+    exec: async function () {
+      await this.$root.reload()
       var func = ''
       if (this.path === '/logout') {
         func = '/login'
       } else {
         func = this.path
       }
-      this.axios.get('http://localhost:8888' + func, {
-        withCredentials: true,
-        params: {
-          id: this.id,
-          password: this.password
-        }
+      this.axios.defaults.headers.common = {
+        'X-CSRF-TOKEN': this.$root.token
+      }
+      var params = new URLSearchParams()
+      params.append('id', this.id)
+      params.append('password', this.password)
+
+      this.axios.post(this.$root.ApiServer + func, params, {
+        withCredentials: true
       })
         .then(response => {
-          console.log(response.data)
           if (response.data.success) {
             switch (this.path) {
               case '/login':
                 this.message = '認証に成功しました'
                 this.$router.push('/')
-                location.reload()
                 break
               case '/register':
                 this.message = '登録が完了しました'
@@ -97,11 +104,12 @@ export default {
             switch (this.path) {
               case '/login':
                 this.message = ''
-                this.error_message = '認証に失敗しました'
+                this.error_message = 'ユーザー名もしくはパスワードが違います'
                 break
               case '/logout':
                 this.message = 'ログアウトしました'
                 this.error_message = ''
+                this.$root.reload()
                 break
               case '/register':
                 this.message = ''

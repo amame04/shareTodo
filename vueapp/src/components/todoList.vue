@@ -17,19 +17,19 @@
             </span>
           </p>
           <div>
-            <button class="btn btn-primary col-auto mx-2" v-on:click="doneTodo(item.todoId)" v-if="!item.doneFlag">
+            <button class="btn btn-success col-auto mx-2" v-on:click="doneTodo(item.todoId)" v-if="!item.doneFlag">
               <i class="bi bi-check-lg"></i>
             </button>
-            <button class="btn btn-primary col-auto mx-2 deleteBtn" v-on:click="deleteTodo(item.todoId)" v-if="item.createdUser == user">
+            <button class="btn btn-danger col-auto mx-2 deleteBtn" v-on:click="deleteTodo(item.todoId)" v-if="item.createdUser == user">
               <i class="bi bi-trash"></i>
             </button>
           </div>
         </div>
       </div>
-      <h4 v-if="todoList == null">TODOを追加しましょう!</h4>
+      <h4 v-if="todoListIsNull">TODOを追加しましょう!</h4>
     </div>
 
-    <button class="btn btn-primary col-auto mx-3 mb-3 modalButton" v-on:click="popUpModal()">
+    <button class="btn btn-success col-auto mx-3 mb-3 modalButton" v-on:click="popUpModal()">
       <i class="bi bi-plus-lg"></i>
     </button>
     <div class="modal_wrap">
@@ -40,7 +40,7 @@
         <div class="modal_content my-auto py-3">
           <label for="trigger" class="close_button">&#x2716;&#xfe0f;</label>
 
-          <div id="newTodo" class="py-5 px-3">
+          <form id="newTodo" class="py-5 px-3" @submit.prevent="registerTodo">
             <div class="py-1">
               <input v-model="todo" class="form-control" type="text" placeholder="やること" autofocus required>
             </div>
@@ -53,17 +53,18 @@
                 <div class="selectBox">
                   <input type="text" class="form-control" v-bind:placeholder="selectPlaceholder" disabled>
                 </div>
-                <div id="checkboxes">
-                  <label class="text-start" v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
-                    <input type="checkbox" class="mx-1" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">{{ item.id }}
-                  </label>
+                <div id="checkboxes" class="text-start">
+                  <div v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
+                    <input v-bind:id="item.id" type="checkbox" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">
+                    <label v-bind:for="item.id">{{item.id}}</label>
+                  </div>
                 </div>
               </div>
             </div>
-            <button class="btn btn-primary col-auto mx-auto mb-3" v-on:click="registerTodo">
+            <button type="submit" class="btn btn-success col-auto mx-3 mb-3">
               <i class="bi bi-pen"></i>
             </button>
-          </div>
+          </form>
 
         </div>
       </div>
@@ -85,15 +86,15 @@ export default {
         dateFormat: 'Y-m-d H:i',
         enableTime: true
       },
+      expanded: false,
       userList: '',
       user: null,
       todoList: null,
-      expand: false,
       selectPlaceholder: '共有',
       todo: '',
       datetime: '',
       checkedUser: [],
-      token: ''
+      todoListIsNull: false
     }
   },
   components: {
@@ -102,7 +103,7 @@ export default {
   created () {
     this.reloadTodoList()
 
-    this.axios.get('http://localhost:8888/userList', {
+    this.axios.get(this.$root.ApiServer + '/userList', {
     })
       .then(response => {
         this.userList = response.data.userList
@@ -113,7 +114,7 @@ export default {
   },
   methods: {
     reloadTodoList: function (e) {
-      this.axios.get('http://localhost:8888/todoList', {
+      this.axios.get(this.$root.ApiServer + '/todoList', {
         withCredentials: true
       })
         .then(response => {
@@ -123,6 +124,7 @@ export default {
             this.$router.push('/login')
             location.reload()
           }
+          this.todoListIsNull = this.todoList === null
         })
         .catch(err => {
           console.error(err)
@@ -132,12 +134,13 @@ export default {
     },
     showCheckBoxes: function (e) {
       var checkboxes = document.getElementById('checkboxes')
-      if (!this.expanded && e.target.closest('.multiselect')) {
-        checkboxes.style.display = 'block'
-        this.expanded = true
-      } else {
-        checkboxes.style.display = 'none'
-        this.expanded = false
+      if (checkboxes !== null) {
+        var expanded = checkboxes.classList.contains('-visible')
+        if (!expanded && e.target.closest('.selectBox')) {
+          checkboxes.classList.add('-visible')
+        } else if (expanded && !e.target.closest('#checkboxes')) {
+          checkboxes.classList.remove('-visible')
+        }
       }
     },
     updatePlaceholder: function () {
@@ -151,13 +154,18 @@ export default {
       }
     },
     registerTodo: function () {
-      this.axios.get('http://localhost:8888/registerTodo', {
-        withCredentials: true,
-        params: {
-          todo: this.todo,
-          date: document.getElementById('datetime-flatpickr').value,
-          shareUsers: this.checkedUser
-        }
+      this.axios.defaults.headers.common = {
+        'X-CSRF-TOKEN': this.$root.token
+      }
+      var params = new URLSearchParams()
+      params.append('todo', this.todo)
+      params.append('date', document.getElementById('datetime-flatpickr').value)
+      if (this.checkedUser.length !== 0) {
+        this.checkedUser.forEach(value => params.append('shareUsers', value))
+      }
+
+      this.axios.post(this.$root.ApiServer + '/registerTodo', params, {
+        withCredentials: true
       })
         .then(response => {
           if (response.data.success) {
@@ -172,7 +180,7 @@ export default {
               document.getElementsByClassName('flatpickr-mobile')[0].value = ''
             }
           } else {
-            alert('failed')
+            console.err('failed')
           }
         })
         .catch(err => {
@@ -180,17 +188,20 @@ export default {
         })
     },
     doneTodo: function (todoId) {
-      this.axios.get('http://localhost:8888/doneTodo', {
-        withCredentials: true,
-        params: {
-          todoId: todoId
-        }
+      this.axios.defaults.headers.common = {
+        'X-CSRF-TOKEN': this.$root.token
+      }
+      var params = new URLSearchParams()
+      params.append('todoId', todoId)
+
+      this.axios.patch(this.$root.ApiServer + '/doneTodo', params, {
+        withCredentials: true
       })
         .then(response => {
           if (response.data.success) {
             this.reloadTodoList()
           } else {
-            alert('failed')
+            console.err('failed')
           }
         })
         .catch(err => {
@@ -198,17 +209,20 @@ export default {
         })
     },
     deleteTodo: function (todoId) {
-      this.axios.get('http://localhost:8888/deleteTodo', {
-        withCredentials: true,
-        params: {
-          todoId: todoId
-        }
+      this.axios.defaults.headers.common = {
+        'X-CSRF-TOKEN': this.$root.token
+      }
+      var params = new URLSearchParams()
+      params.append('todoId', todoId)
+
+      this.axios.delete(this.$root.ApiServer + '/deleteTodo?' + params.toString(), {
+        withCredentials: true
       })
         .then(response => {
           if (response.data.success) {
             this.reloadTodoList()
           } else {
-            alert('failed')
+            console.err('failed')
           }
         })
         .catch(err => {
@@ -252,15 +266,11 @@ export default {
   padding-left: 0;
 }
 
-#newTodo {
-}
-
 #newTodo > button {
-  height: 100%;
-}
-
-#todoList {
-  /* */
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 1.5em;
 }
 
 .multiselect {
@@ -272,8 +282,8 @@ export default {
   position: relative;
 }
 
-.selectBox select {
-  width: 100%;
+.selectBox > input {
+  cursor: pointer;
 }
 
 .overSelect {
@@ -283,20 +293,70 @@ export default {
   bottom: 0;
 }
 
-.selectBox > select{
-  border: none;
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 #checkboxes {
+  opacity: 0;
+  animation: fadeOut 0.3s ease-in 0s forwards;
+}
+#checkboxes.-visible {
+  opacity: 1;
+  animation: fadeIn 0.3s ease-in 0s forwards;
+}
+
+#checkboxes > div > input {
   display: none;
 }
 
-#checkboxes label {
-  display: block;
+#checkboxes > div {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
 }
 
-#checkboxes label:hover {
-  background-color: #eeeeee;
+#checkboxes > div > label {
+  display: inline-block;
+  margin: 0.2em 0;
+  padding: 0.1em 1em;
+  border: 0.2em solid #fff;
+  border-radius: 3em;
+  color: #fff;
+  background-color: #6a8494;
+  box-shadow: 0 0 0.1em rgba(0, 0, 0, .2);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color .2s, box-shadow .2s;
+}
+
+#checkboxes > div > label:hover, input:focus + label {
+  box-shadow: 0 0 0.5em rgba(0, 0, 0, .6);
+}
+
+#checkboxes > div > input:checked + label {
+  background-color: #ab576c;
+}
+
+#checkboxes > div > input:checked + label::before {
+  background-color: rgb(219, 219, 219);
 }
 
 /* modal */
