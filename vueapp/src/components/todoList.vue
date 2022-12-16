@@ -138,12 +138,20 @@ export default {
         var expanded = checkboxes.classList.contains('-visible')
         if (!expanded && e.target.closest('.selectBox')) {
           checkboxes.classList.add('-visible')
-          document.querySelectorAll("#checkboxes input").forEach( e => e.disabled = false)
-          document.querySelectorAll("#checkboxes label").forEach( e => e.style.cursor = 'pointer')
+          document.querySelectorAll('#checkboxes input').forEach(e => {
+            e.disabled = false
+          })
+          document.querySelectorAll('#checkboxes label').forEach(e => {
+            e.style.cursor = 'pointer'
+          })
         } else if (expanded && !e.target.closest('#checkboxes')) {
           checkboxes.classList.remove('-visible')
-          document.querySelectorAll("#checkboxes input").forEach( e => e.disabled = true)
-          document.querySelectorAll("#checkboxes label").forEach( e => e.style.cursor = 'default')
+          document.querySelectorAll('#checkboxes input').forEach(e => {
+            e.disabled = true
+          })
+          document.querySelectorAll('#checkboxes label').forEach(e => {
+            e.style.cursor = 'default'
+          })
         }
       }
     },
