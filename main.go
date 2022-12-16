@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
+  "github.com/gin-contrib/static"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	csrf "github.com/utrack/gin-csrf"
+	"github.com/utrack/gin-csrf"
 
 	"sampleapp/DB"
 	"sampleapp/user"
@@ -22,8 +23,9 @@ func main() {
 	r := gin.Default()
 	store := cookie.NewStore([]byte("secret"))
 
+  r.Use(static.Serve("/", static.LocalFile("./vueapp/dist", false)))
+
 	r.Use(sessions.Sessions("session", store))
-	//r.Static("/views", "./views")
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{

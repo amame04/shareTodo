@@ -19,7 +19,7 @@ new Vue({
   template: '<App/>',
   data () {
     return {
-      ApiServer: 'http://localhost:8888'
+      ApiServer: ''
     }
   },
   methods: {
