@@ -2,6 +2,9 @@
   <div id="todoForm" class="mx-auto py-3">
 
     <div id="todoList" class="mx-4 text-center">
+      <button type="button" id="reloadBtn" class="btn btn-outline-primary" v-on:click="reloadTodoList">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
       <div class="card my-2" v-for="item in todoList" v-bind:key="item.todoId">
         <div class="card-body">
           <h5 class="card-title">{{ item.todoContent }}</h5>
@@ -428,4 +431,13 @@ export default {
 .modal_wrap input:checked ~ .modal_overlay .modal_content{
   transform: scale(1);
 }
+
+#reloadBtn:focus {
+  box-shadow: none;
+}
+
+#reloadBtn:active {
+
+}
+
 </style>
