@@ -2,8 +2,10 @@
   <div id="todoForm" class="mx-auto py-3">
 
     <div id="todoList" class="mx-4 text-center">
-      <button type="button" id="reloadBtn" class="btn btn-outline-primary" v-on:click="reloadTodoList">
-        <i class="bi bi-arrow-clockwise"></i>
+      <button type="button" id="reloadBtn" class="btn btn-outline-primary" v-on:click="reloadTodoList(); rotation()">
+        <div>
+          <i class="bi bi-arrow-clockwise"></i>
+        </div>
       </button>
       <div class="card my-2" v-for="item in todoList" v-bind:key="item.todoId">
         <div class="card-body">
@@ -29,7 +31,7 @@
           </div>
         </div>
       </div>
-      <h4 v-if="todoListIsNull">TODOを追加しましょう!</h4>
+      <h4 v-if="todoListIsNull" class="my-5">やるべき事はありません</h4>
     </div>
 
     <button class="btn btn-success col-auto mx-3 mb-3 modalButton" v-on:click="popUpModal()">
@@ -51,15 +53,16 @@
               <flat-pickr id="datetime-flatpickr" v-bind:modelValue="datetime" :config="config" placeholder="いつまで" class="form-control"></flat-pickr>
             </div>
             <div class="py-1 mb-3">
-              <!-- ユーザー名一覧をプルダウンチェックリストで表示-->
               <div class="multiselect">
                 <div class="selectBox">
                   <input type="text" class="form-control" v-bind:placeholder="selectPlaceholder" disabled>
                 </div>
                 <div id="checkboxes" class="text-start">
-                  <div v-for="item in userList" v-bind:key="item.id" v-if="item.id != user">
-                    <input v-bind:id="item.id" type="checkbox" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder" disabled>
-                    <label v-bind:for="item.id">{{item.id}}</label>
+                  <div v-for="item in userList" v-bind:key="item.id">
+                    <div v-if="item.id != user">
+                      <input v-bind:id="item.id" type="checkbox" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder" disabled>
+                      <label v-bind:for="item.id">{{item.id}}</label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -116,6 +119,22 @@ export default {
       })
   },
   methods: {
+    rotation: function () {
+      var button = document.getElementById('reloadBtn')
+      var e = button.getElementsByTagName('div')[0]
+
+      button.disabled = true
+      e.classList.add('rotateAnime')
+      var s = 0
+      setInterval(function () {
+        s++
+        if (s === 500) {
+          clearInterval()
+          button.disabled = false
+          e.classList.remove('rotateAnime')
+        }
+      })
+    },
     reloadTodoList: function (e) {
       this.axios.get(this.$root.ApiServer + '/todoList', {
         withCredentials: true
@@ -339,17 +358,17 @@ export default {
   animation: fadeIn 0.3s ease-in 0s forwards;
 }
 
-#checkboxes > div > input {
+#checkboxes > div > div > input {
   display: none;
 }
 
-#checkboxes > div {
+#checkboxes > div > div {
   display: inline-block;
   margin: 0;
   padding: 0;
 }
 
-#checkboxes > div > label {
+#checkboxes > div > div > label {
   display: inline-block;
   margin: 0.2em 0;
   padding: 0.1em 1em;
@@ -364,15 +383,15 @@ export default {
   transition: background-color .2s, box-shadow .2s;
 }
 
-#checkboxes > div > label:hover, input:focus + label {
+#checkboxes > div > div > label:hover, input:focus + label {
   box-shadow: 0 0 0.5em rgba(0, 0, 0, .6);
 }
 
-#checkboxes > div > input:checked + label {
+#checkboxes > div > div > input:checked + label {
   background-color: #ab576c;
 }
 
-#checkboxes > div > input:checked + label::before {
+#checkboxes > div > div > input:checked + label::before {
   background-color: rgb(219, 219, 219);
 }
 
@@ -436,8 +455,12 @@ export default {
   box-shadow: none;
 }
 
-#reloadBtn:active {
-
+@keyframes rotation{
+  0%{ transform:rotate(0);}
+  100%{ transform:rotate(360deg); }
 }
 
+.rotateAnime{
+  animation: rotation 1s 1 ease-out;
+}
 </style>
