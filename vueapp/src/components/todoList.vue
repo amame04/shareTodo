@@ -4,7 +4,7 @@
     <div id="todoList" class="mx-4 text-center">
       <button type="button" id="reloadBtn" class="btn btn-outline-primary" v-on:click="reloadTodoList(); rotation()">
         <div>
-          <i class="bi bi-arrow-clockwise"></i>
+          <i class="bi bi-arrow-clockwise align-middle"></i>
         </div>
       </button>
       <div class="card my-2" v-for="item in todoList" v-bind:key="item.todoId">
@@ -43,7 +43,7 @@
       <div class="modal_overlay">
         <label for="trigger" class="modal_trigger"></label>
         <div class="modal_content my-auto py-3">
-          <label for="trigger" class="close_button">&#x2716;&#xfe0f;</label>
+          <label for="trigger" class="close_button"><i class="bi bi-x"></i></label>
 
           <form id="newTodo" class="py-5 px-3" @submit.prevent="registerTodo">
             <div class="py-1">
@@ -60,7 +60,7 @@
                 <div id="checkboxes" class="text-start">
                   <div v-for="item in userList" v-bind:key="item.id">
                     <div v-if="item.id != user">
-                      <input v-bind:id="item.id" type="checkbox" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder" disabled>
+                      <input v-bind:id="item.id" type="checkbox" v-bind:value="item.id" v-model="checkedUser" v-on:change="updatePlaceholder">
                       <label v-bind:for="item.id">{{item.id}}</label>
                     </div>
                   </div>
@@ -154,29 +154,6 @@ export default {
           location.reload()
         })
     },
-    showCheckBoxes: function (e) {
-      var checkboxes = document.getElementById('checkboxes')
-      if (checkboxes !== null) {
-        var expanded = checkboxes.classList.contains('-visible')
-        if (!expanded && e.target.closest('.selectBox')) {
-          checkboxes.classList.add('-visible')
-          document.querySelectorAll('#checkboxes input').forEach(e => {
-            e.disabled = false
-          })
-          document.querySelectorAll('#checkboxes label').forEach(e => {
-            e.style.cursor = 'pointer'
-          })
-        } else if (expanded && !e.target.closest('#checkboxes')) {
-          checkboxes.classList.remove('-visible')
-          document.querySelectorAll('#checkboxes input').forEach(e => {
-            e.disabled = true
-          })
-          document.querySelectorAll('#checkboxes label').forEach(e => {
-            e.style.cursor = 'default'
-          })
-        }
-      }
-    },
     updatePlaceholder: function () {
       if (this.checkedUser.length === 0) {
         this.selectPlaceholder = '共有'
@@ -266,12 +243,6 @@ export default {
     popUpModal: function () {
       document.getElementById('trigger').checked = !document.getElementById('trigger').checked
     }
-  },
-  mounted: function () {
-    document.addEventListener('click', (e) => this.showCheckBoxes(e), false)
-  },
-  destroyed: function () {
-    document.removeEventListener('click', (e) => this.showCheckBoxes(e), false)
   }
 }
 </script>
@@ -308,7 +279,6 @@ export default {
 }
 
 .multiselect {
-  /*width: 200px;*/
   position: relative;
 }
 
@@ -327,41 +297,11 @@ export default {
   bottom: 0;
 }
 
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    cursor: default;
-  }
-
-  100% {
-    opacity: 1;
-    cursor: pointer;
-  }
-}
-
-@keyframes fadeOut {
-  0% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
-#checkboxes {
-  opacity: 0;
-  animation: fadeOut 0.3s ease-in 0s forwards;
-}
-#checkboxes.-visible {
-  opacity: 1;
-  animation: fadeIn 0.3s ease-in 0s forwards;
-}
-
 #checkboxes > div > div > input {
   display: none;
 }
 
+#checkboxes > div,
 #checkboxes > div > div {
   display: inline-block;
   margin: 0;
@@ -437,7 +377,7 @@ export default {
 }
 
 .close_button{
-  font-size: 1.5rem;
+  font-size: 2.5rem;
   cursor: pointer;
 }
 
