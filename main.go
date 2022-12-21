@@ -5,11 +5,12 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
-  "github.com/gin-contrib/static"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/utrack/gin-csrf"
 
@@ -46,6 +47,7 @@ func main() {
 
 	secret := func(length int) string {
 		const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		rand.Seed(time.Now().UnixNano())
 		b := make([]byte, length)
 		for i := range b {
 			b[i] = letters[rand.Intn(len(letters))]
