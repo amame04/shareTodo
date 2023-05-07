@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -12,15 +13,20 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/utrack/gin-csrf"
 
-	"sampleapp/DB"
-	"sampleapp/user"
+	"shareTodo/DB"
+	"shareTodo/user"
 )
 
 var db *sql.DB
 
 func main() {
+  if e := godotenv.Load(); e != nil {
+    log.Fatal(e)
+  }
+
 	r := gin.Default()
 	store := cookie.NewStore([]byte("secret"))
 

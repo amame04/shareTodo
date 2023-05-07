@@ -1,3 +1,12 @@
-This is sharing todo lists.
+他人とTodoリストの項目をシェアできるWebアプリケーションです。
+Go, gin, Vue.jsを使用しています。
 
-Go, gin, Vue.js are used.
+使用する際は .env ファイルを追加し
+* DB_APP="mysql"
+* DB_USER="DBのユーザー名"
+* DB_PASSWORD="DBのパスワード"
+* DB_HOST="DBの接続先IPとポート"
+* DB_DB="使用するデータベース名"
+の環境変数情報を先に設定してください。
+
+<img src="screenshot.png" width="600px">

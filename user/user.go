@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"sampleapp/DB"
+	"shareTodo/DB"
 
 	_ "github.com/go-sql-driver/mysql"
 )

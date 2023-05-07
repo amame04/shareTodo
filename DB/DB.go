@@ -1,24 +1,24 @@
-package DB 
+package DB
 
 import (
-  "database/sql"
-  "log"
+	"database/sql"
+	"log"
+	"os"
 
-  _ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
-
-const app string = "mysql"
-
-const id string = "root"
-const password string = "password"
-const ip string = "localhost:3306"
-const database string = "todo"
-
-const creds = id+":"+password+"@("+ip+")/"+database
 
 var DB *sql.DB
 
 func DBinit() {
+  app := os.Getenv("DB_APP")
+  user := os.Getenv("DB_USER")
+  password := os.Getenv("DB_PASSWORD")
+  host := os.Getenv("DB_HOST")
+  database := os.Getenv("DB_DB")
+
+  creds := user+":"+password+"@("+host+")/"+database
+
   var err error
   DB, err = sql.Open(app, creds)
   if err != nil {
