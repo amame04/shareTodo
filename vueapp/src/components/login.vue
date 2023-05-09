@@ -59,6 +59,7 @@ export default {
         this.submit = 'ログイン'
         this.link = '/register'
         this.link_str = '新規会員登録'
+        this.result = false
       } else if (this.path === '/register') {
         this.submit = '登録'
         this.link = '/login'
