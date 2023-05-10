@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-contrib/cors"
+	//"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/static"
@@ -34,8 +34,10 @@ func main() {
 
 	r.Use(sessions.Sessions("session", store))
 
+  /*
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
+      //SPAのホスティングサーバーとAPIサーバーが別の場合はホスティングサーバーのオリジンを記載してください
 			"http://localhost:8080",
 		},
 		AllowMethods: []string{
@@ -50,6 +52,7 @@ func main() {
 		},
 		AllowCredentials: true,
 	}))
+  */
 
 	secret := func(length int) string {
 		const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
