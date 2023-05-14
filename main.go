@@ -23,21 +23,21 @@ import (
 var db *sql.DB
 
 func main() {
-  if e := godotenv.Load(); e != nil {
-    log.Fatal(e)
-  }
+  	if e := godotenv.Load(); e != nil {
+    		log.Fatal(e)
+  	}
 
 	r := gin.Default()
 	store := cookie.NewStore([]byte("secret"))
 
-  r.Use(static.Serve("/", static.LocalFile("./vueapp/dist", false)))
+  	r.Use(static.Serve("/", static.LocalFile("./vueapp/dist", false)))
 
 	r.Use(sessions.Sessions("session", store))
 
-  /*
+  	/*
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
-      //SPAのホスティングサーバーとAPIサーバーが別の場合はホスティングサーバーのオリジンを記載してください
+      			//SPAのホスティングサーバーとAPIサーバーが別の場合はホスティングサーバーのオリジンを記載してください
 			"http://localhost:8080",
 		},
 		AllowMethods: []string{
@@ -52,7 +52,7 @@ func main() {
 		},
 		AllowCredentials: true,
 	}))
-  */
+  	*/
 
 	secret := func(length int) string {
 		const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
