@@ -23,9 +23,9 @@ import (
 var db *sql.DB
 
 func main() {
-  	if e := godotenv.Load(); e != nil {
-    		log.Fatal(e)
-  	}
+  if e := godotenv.Load(); e != nil {
+      log.Fatal(e)
+  }
 
   r := gin.Default()
   store := cookie.NewStore([]byte("secret"))
