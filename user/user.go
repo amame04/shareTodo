@@ -1,15 +1,15 @@
 package user
 
 import (
-	"database/sql"
-	"fmt"
-	"log"
+  "database/sql"
+  "fmt"
+  "log"
 
-	"golang.org/x/crypto/bcrypt"
+  "golang.org/x/crypto/bcrypt"
 
-	"shareTodo/DB"
+  "shareTodo/DB"
 
-	_ "github.com/go-sql-driver/mysql"
+  _ "github.com/go-sql-driver/mysql"
 )
 
 type User struct {
